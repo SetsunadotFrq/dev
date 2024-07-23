@@ -1,28 +1,42 @@
 <%
-' サーバーXMLHTTPオブジェクトを作成
-Set xmlhttp = Server.CreateObject("MSXML2.ServerXMLHTTP.6.0")
+' サーバーAPIのURL
+Dim apiUrl
+apiUrl = "https://yourserver.com/api/upload"
 
-' ターゲットURLを設定
-url = "https://example.com/api/endpoint"
+' アップロードするファイルのパス
+Dim filePath
+filePath = Server.MapPath("yourfile.txt")
 
-' リクエストを開く
-xmlhttp.open "POST", url, false
+' ファイルの内容を読み込む
+Dim objFSO, objFile, fileContents
+Set objFSO = Server.CreateObject("Scripting.FileSystemObject")
+Set objFile = objFSO.OpenTextFile(filePath, 1)
+fileContents = objFile.ReadAll()
+objFile.Close
+Set objFile = Nothing
+Set objFSO = Nothing
+
+' XMLHTTPオブジェクトを作成
+Dim xmlHttp
+Set xmlHttp = Server.CreateObject("MSXML2.ServerXMLHTTP.6.0")
+
+' HTTPリクエストを初期化
+xmlHttp.Open "POST", apiUrl, False
 
 ' リクエストヘッダーを設定
-xmlhttp.setRequestHeader "Content-Type", "application/x-www-form-urlencoded"
+xmlHttp.setRequestHeader "Content-Type", "application/octet-stream"
+xmlHttp.setRequestHeader "Content-Length", LenB(fileContents)
 
-' POSTデータを設定
-postData = "param1=value1&param2=value2"
+' ファイルの内容を送信
+xmlHttp.Send fileContents
 
-' リクエストを送信
-xmlhttp.send postData
-
-' レスポンスの取得
-responseText = xmlhttp.responseText
+' レスポンスを取得
+Dim responseText
+responseText = xmlHttp.responseText
 
 ' レスポンスを表示
-Response.Write "Response: " & responseText
+Response.Write "Response from server: " & responseText
 
-' オブジェクトの解放
-Set xmlhttp = Nothing
+' オブジェクトを解放
+Set xmlHttp = Nothing
 %>
