@@ -1,64 +1,37 @@
-Imports System.Data
-Imports System.Data.Common
+Imports System
+Imports System.IO
+Imports System.Net
+Imports System.Net.Http
+Imports System.Threading.Tasks
+Imports System.Web.Http
 
-Public Class DatabaseConnection
-    Implements IDisposable
+Namespace YourNamespace
+    Public Class UploadController
+        Inherits ApiController
 
-    Private _connectionString As String
-    Private _providerName As String
-    Private _factory As DbProviderFactory
-    Private _connection As DbConnection
-
-    Public Sub New(connectionString As String, providerName As String)
-        _connectionString = connectionString
-        _providerName = providerName
-        _factory = DbProviderFactories.GetFactory(_providerName)
-        _connection = _factory.CreateConnection()
-        _connection.ConnectionString = _connectionString
-    End Sub
-
-    Public Sub OpenConnection()
-        If _connection.State <> ConnectionState.Open Then
-            _connection.Open()
-        End If
-    End Sub
-
-    Public Sub CloseConnection()
-        If _connection.State <> ConnectionState.Closed Then
-            _connection.Close()
-        End If
-    End Sub
-
-    Public Function ExecuteQuery(query As String) As DataTable
-        Dim command As DbCommand = _connection.CreateCommand()
-        command.CommandText = query
-
-        Dim adapter As DbDataAdapter = _factory.CreateDataAdapter()
-        adapter.SelectCommand = command
-
-        Dim result As New DataTable()
-        adapter.Fill(result)
-
-        Return result
-    End Function
-
-    Public Sub ExecuteNonQuery(query As String)
-        Dim command As DbCommand = _connection.CreateCommand()
-        command.CommandText = query
-        command.ExecuteNonQuery()
-    End Sub
-
-    Protected Overridable Sub Dispose(disposing As Boolean)
-        If disposing Then
-            If _connection IsNot Nothing Then
-                _connection.Dispose()
-                _connection = Nothing
+        <HttpPost>
+        <Route("api/upload")>
+        Public Async Function UploadFile() As Task(Of HttpResponseMessage)
+            If Not Request.Content.IsMimeMultipartContent() Then
+                Return Request.CreateResponse(HttpStatusCode.UnsupportedMediaType)
             End If
-        End If
-    End Sub
 
-    Public Sub Dispose() Implements IDisposable.Dispose
-        Dispose(True)
-        GC.SuppressFinalize(Me)
-    End Sub
-End Class
+            Try
+                Dim streamProvider = New MultipartMemoryStreamProvider()
+                Await Request.Content.ReadAsMultipartAsync(streamProvider)
+
+                For Each file In streamProvider.Contents
+                    Dim filename = file.Headers.ContentDisposition.FileName.Trim(""""c)
+                    Dim buffer = Await file.ReadAsByteArrayAsync()
+                    Dim filePath = Path.Combine("C:\Uploads", filename)
+
+                    File.WriteAllBytes(filePath, buffer)
+                Next
+
+                Return Request.CreateResponse(HttpStatusCode.OK)
+            Catch ex As Exception
+                Return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message)
+            End Try
+        End Function
+    End Class
+End Namespace
