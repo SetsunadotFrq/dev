@@ -10,7 +10,7 @@ Dim filePath
 filePath = Server.MapPath("yourfile.xlsx")
 
 ' ADODB.Streamオブジェクトを使ってファイルをバイナリモードで読み込む
-Dim stream, byteData
+Dim stream, byteData, boundary, CRLF
 Set stream = Server.CreateObject("ADODB.Stream")
 stream.Type = 1 ' バイナリデータとして扱う
 stream.Open
@@ -31,29 +31,29 @@ If IsEmpty(byteData) Or LenB(byteData) = 0 Then
 End If
 
 ' バウンダリとコンテンツを作成
-Dim boundary, CRLF, postData
 boundary = "---------------------------" & Right(CStr(Timer() * 1000), 10)
 CRLF = vbCrLf
 
-' POSTデータの組み立て
-Dim preData, totalData
+' プレデータ、ポストデータの組み立て
+Dim preData, postData
 preData = "--" & boundary & CRLF & _
     "Content-Disposition: form-data; name=""file""; filename=""yourfile.xlsx""" & CRLF & _
     "Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" & CRLF & CRLF
 
-Dim preBytes, boundaryBytes, postBytes
-preBytes = StrConv(preData, vbFromUnicode)
-boundaryBytes = StrConv("--" & boundary & CRLF, vbFromUnicode)
-postBytes = StrConv(CRLF & "--" & boundary & "--" & CRLF, vbFromUnicode)
+postData = CRLF & "--" & boundary & "--" & CRLF
 
-' バイナリデータを結合
+' データをバイナリストリームに書き込む
+Dim totalStream, totalData
 Set totalStream = Server.CreateObject("ADODB.Stream")
 totalStream.Type = 1 ' バイナリデータとして扱う
 totalStream.Open
-totalStream.Write preBytes
+
+' 各部分をバイナリ形式で書き込む
+totalStream.Write StrConv(preData, vbFromUnicode)
 totalStream.Write byteData
-totalStream.Write boundaryBytes
-totalStream.Write postBytes
+totalStream.Write StrConv(postData, vbFromUnicode)
+
+' ストリームの位置を先頭に戻す
 totalStream.Position = 0
 totalData = totalStream.Read()
 totalStream.Close
