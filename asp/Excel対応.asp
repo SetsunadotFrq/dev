@@ -59,6 +59,13 @@ totalData = totalStream.Read()
 totalStream.Close
 Set totalStream = Nothing
 
+' デバッグ出力
+Response.Write "Boundary: " & boundary & "<br>"
+Response.Write "PreData length: " & LenB(StrConv(preData, vbFromUnicode)) & "<br>"
+Response.Write "File Data length: " & LenB(byteData) & "<br>"
+Response.Write "PostData length: " & LenB(StrConv(postData, vbFromUnicode)) & "<br>"
+Response.Write "TotalData length: " & LenB(totalData) & "<br>"
+
 ' XMLHTTPオブジェクトを作成
 Dim xmlHttp
 Set xmlHttp = Server.CreateObject("MSXML2.ServerXMLHTTP.6.0")
