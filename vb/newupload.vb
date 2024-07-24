@@ -1,30 +1,41 @@
 Imports System
 Imports System.IO
-Imports System.Web
-Imports System.Web.Mvc
+Imports System.Net
+Imports System.Net.Http
+Imports System.Threading.Tasks
+Imports System.Web.Http
 
 Namespace YourNamespace
     Public Class UploadController
-        Inherits Controller
+        Inherits ApiController
 
         <HttpPost>
-        Public Function UploadFile(ByVal file As HttpPostedFileBase) As ActionResult
-            If file Is Nothing OrElse file.ContentLength = 0 Then
-                Return New HttpStatusCodeResult(HttpStatusCode.BadRequest, "No file uploaded.")
+        <Route("api/upload")>
+        Public Async Function UploadFile() As Task(Of HttpResponseMessage)
+            If Not Request.Content.IsMimeMultipartContent() Then
+                Return Request.CreateResponse(HttpStatusCode.UnsupportedMediaType, "Unsupported media type")
             End If
 
             Try
-                Dim fileName As String = Path.GetFileName(file.FileName)
-                Dim filePath As String = Path.Combine(Server.MapPath("~/Uploads"), fileName)
+                Dim streamProvider = New MultipartMemoryStreamProvider()
+                Await Request.Content.ReadAsMultipartAsync(streamProvider)
 
-                ' ファイルを指定されたパスに保存
-                file.SaveAs(filePath)
+                For Each file In streamProvider.Contents
+                    Dim filename = file.Headers.ContentDisposition.FileName.Trim(""""c)
+                    Dim buffer = Await file.ReadAsByteArrayAsync()
+                    Dim filePath = Path.Combine("C:\Uploads", filename)
+
+                    ' ファイルを書き込むためにファイルストリームを使用
+                    Using fileStream As New FileStream(filePath, FileMode.Create, FileAccess.Write)
+                        fileStream.Write(buffer, 0, buffer.Length)
+                    End Using
+                Next
 
                 ' 成功メッセージを返す
-                Return Content("File uploaded successfully")
+                Return Request.CreateResponse(HttpStatusCode.OK, "File uploaded successfully")
             Catch ex As Exception
                 ' エラーメッセージを返す
-                Return New HttpStatusCodeResult(HttpStatusCode.InternalServerError, ex.Message)
+                Return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message)
             End Try
         End Function
     End Class
