@@ -34,7 +34,7 @@ End If
 boundary = "---------------------------" & Right(CStr(Timer() * 1000), 10)
 CRLF = vbCrLf
 
-' プレデータとポストデータの組み立て
+' プレデータとポストデータのバイナリ表現を作成
 Dim preData, postData
 preData = "--" & boundary & CRLF & _
     "Content-Disposition: form-data; name=""file""; filename=""yourfile.xlsx""" & CRLF & _
@@ -42,15 +42,15 @@ preData = "--" & boundary & CRLF & _
 
 postData = CRLF & "--" & boundary & "--" & CRLF
 
-' データをバイナリストリームに書き込む
-Dim totalStream, preDataBytes, postDataBytes
+' プレデータとポストデータをバイナリストリームで書き込む
+Dim preDataBytes, postDataBytes
+preDataBytes = StrConv(preData, vbFromUnicode)
+postDataBytes = StrConv(postData, vbFromUnicode)
+
+Dim totalStream
 Set totalStream = Server.CreateObject("ADODB.Stream")
 totalStream.Type = 1 ' バイナリデータとして扱う
 totalStream.Open
-
-' プレデータとポストデータをバイナリ形式で変換
-preDataBytes = StrConv(preData, vbFromUnicode)
-postDataBytes = StrConv(postData, vbFromUnicode)
 
 ' 各部分をバイナリ形式で書き込む
 totalStream.Write preDataBytes
@@ -59,6 +59,7 @@ totalStream.Write postDataBytes
 
 ' ストリームの位置を先頭に戻す
 totalStream.Position = 0
+Dim totalData
 totalData = totalStream.Read()
 totalStream.Close
 Set totalStream = Nothing
