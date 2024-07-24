@@ -2,6 +2,7 @@ Imports System.IO
 Imports System.Net
 Imports System.Net.Http
 Imports System.Net.Http.Headers
+Imports System.Threading.Tasks
 Imports System.Web.Http
 
 Public Class FileUploadController
@@ -35,8 +36,15 @@ Public Class FileUploadController
             File.Move(fileData.LocalFileName, filePath)
 
             Return Request.CreateResponse(HttpStatusCode.OK, New With {.FilePath = filePath})
+        Catch ex As IOException
+            ' 入出力エラーの場合
+            Return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "File processing error: " & ex.Message)
+        Catch ex As UnauthorizedAccessException
+            ' 権限エラーの場合
+            Return Request.CreateErrorResponse(HttpStatusCode.Forbidden, "Access denied: " & ex.Message)
         Catch ex As Exception
-            Return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message)
+            ' 一般的なエラー
+            Return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " & ex.Message)
         End Try
     End Function
 End Class
