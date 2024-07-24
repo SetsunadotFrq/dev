@@ -1,7 +1,7 @@
 <%
 ' サーバーAPIのURL
 Dim apiUrl
-apiUrl = "https://yourserver.com/upload/uploadfile"
+apiUrl = "https://yourserver.com/api/upload"
 
 ' アップロードするファイルのパス
 Dim filePath
@@ -47,9 +47,6 @@ responseText = xmlHttp.responseText
 ' ステータスとレスポンスを表示
 Response.Write "Status: " & status & "<br>"
 Response.Write "Response from server: " & responseText & "<br>"
-
-' レスポンスをデバッグ出力
-Response.Write "Response Text: " & Server.HTMLEncode(responseText) & "<br>"
 
 ' オブジェクトを解放
 Set xmlHttp = Nothing
