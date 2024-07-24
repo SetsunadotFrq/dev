@@ -34,7 +34,7 @@ End If
 boundary = "---------------------------" & Right(CStr(Timer() * 1000), 10)
 CRLF = vbCrLf
 
-' プレデータ、ポストデータの組み立て
+' プレデータとポストデータの組み立て
 Dim preData, postData
 preData = "--" & boundary & CRLF & _
     "Content-Disposition: form-data; name=""file""; filename=""yourfile.xlsx""" & CRLF & _
