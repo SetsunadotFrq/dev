@@ -43,15 +43,19 @@ preData = "--" & boundary & CRLF & _
 postData = CRLF & "--" & boundary & "--" & CRLF
 
 ' データをバイナリストリームに書き込む
-Dim totalStream, totalData
+Dim totalStream, preDataBytes, postDataBytes
 Set totalStream = Server.CreateObject("ADODB.Stream")
 totalStream.Type = 1 ' バイナリデータとして扱う
 totalStream.Open
 
+' プレデータとポストデータをバイナリ形式で変換
+preDataBytes = StrConv(preData, vbFromUnicode)
+postDataBytes = StrConv(postData, vbFromUnicode)
+
 ' 各部分をバイナリ形式で書き込む
-totalStream.Write StrConv(preData, vbFromUnicode)
+totalStream.Write preDataBytes
 totalStream.Write byteData
-totalStream.Write StrConv(postData, vbFromUnicode)
+totalStream.Write postDataBytes
 
 ' ストリームの位置を先頭に戻す
 totalStream.Position = 0
@@ -61,9 +65,9 @@ Set totalStream = Nothing
 
 ' デバッグ出力
 Response.Write "Boundary: " & boundary & "<br>"
-Response.Write "PreData length: " & LenB(StrConv(preData, vbFromUnicode)) & "<br>"
+Response.Write "PreData length: " & LenB(preDataBytes) & "<br>"
 Response.Write "File Data length: " & LenB(byteData) & "<br>"
-Response.Write "PostData length: " & LenB(StrConv(postData, vbFromUnicode)) & "<br>"
+Response.Write "PostData length: " & LenB(postDataBytes) & "<br>"
 Response.Write "TotalData length: " & LenB(totalData) & "<br>"
 
 ' XMLHTTPオブジェクトを作成
